@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="learning_collection_loco — engineering report. Kotlin/Spring Boot to Rust/Loco port: 488 Rust lines, 25 source files, 13 routes, 1 entity, 1 migration, Loco 0.16 + Axum 0.8 + SeaORM 1.1 + SQLite.">
+  <title>learning_collection_loco &mdash; Engineering Report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&amp;family=Share+Tech+Mono&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="hud-static.css">
+  <link rel="stylesheet" href="tutorial.css">
+  <style>
+    .tutorial-main { max-width: 76rem; }
+    .bar-wrap { background:var(--bg-primary); border:1px solid var(--border); border-radius:2px; height:18px; position:relative; overflow:hidden; }
+    .bar-fill { height:100%; border-radius:1px; transition:width 1.2s cubic-bezier(.22,1,.36,1); }
+    .bar-fill.green   { background:linear-gradient(90deg,#39ff14,#20c00a); box-shadow:0 0 8px rgba(57,255,20,.4); }
+    .bar-fill.cyan    { background:linear-gradient(90deg,#05d9e8,#0891b2); box-shadow:0 0 8px rgba(5,217,232,.4); }
+    .bar-fill.yellow  { background:linear-gradient(90deg,#ffb800,#e8a000); box-shadow:0 0 8px rgba(255,184,0,.35); }
+    .bar-fill.magenta { background:linear-gradient(90deg,#d300c5,#a000a0); box-shadow:0 0 8px rgba(211,0,197,.35); }
+    .bar-pct { position:absolute; right:6px; top:0; line-height:18px; font-size:10px; font-weight:700; color:#fff; text-shadow:0 0 4px #000; font-family:'Orbitron',sans-serif; }
+
+    .file-table { width:100%; border-collapse:collapse; margin:0.6rem 0; font-size:12px; }
+    .file-table th { background:var(--bg-secondary); color:var(--cyan); font-family:'Orbitron',sans-serif; font-size:10px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; text-align:left; padding:7px 10px; border:1px solid var(--border); }
+    .file-table td { padding:6px 10px; border:1px solid var(--border); color:var(--text-dim); vertical-align:middle; }
+    .file-table tr:hover td { background:var(--bg-hover); }
+    .file-table td:first-child { font-family:'Share Tech Mono',monospace; color:var(--accent-light); font-weight:600; white-space:nowrap; }
+    .file-table .num { text-align:right; font-family:'Share Tech Mono',monospace; }
+    .file-table .total-row td { background:var(--bg-secondary); font-weight:700; color:var(--text); border-top:2px solid var(--cyan); }
+    .file-table code { font-size:11px; color:var(--accent-light); background:var(--bg-primary); padding:1px 4px; border-radius:2px; }
+
+    .stat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(13rem,1fr)); gap:0.75rem; margin:1.2rem 0; }
+    .stat-card { border:1px solid var(--border); border-top:3px solid var(--cyan); background:var(--bg-card); padding:1rem 1.2rem; border-radius:2px; text-align:center; }
+    .stat-card .stat-val { font-family:'Orbitron',sans-serif; font-size:28px; font-weight:900; color:var(--cyan); line-height:1.1; text-shadow:0 0 20px var(--cyan-glow); }
+    .stat-card .stat-val.accent { color:var(--accent); text-shadow:0 0 20px var(--accent-glow); }
+    .stat-card .stat-val.green  { color:var(--green); text-shadow:0 0 20px rgba(57,255,20,.3); }
+    .stat-card .stat-label { font-family:'Orbitron',sans-serif; font-size:9px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); margin-top:0.5rem; }
+    @keyframes glow-pulse { 0%,100%{text-shadow:0 0 20px var(--cyan-glow)} 50%{text-shadow:0 0 40px var(--cyan-glow),0 0 80px var(--cyan-dim)} }
+    .stat-card .stat-val { animation:glow-pulse 3s ease-in-out infinite; }
+
+    .mapping-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(20rem,1fr)); gap:0.65rem; margin:0.8rem 0; }
+    .mapping-card { border:1px solid var(--border); border-left:3px solid var(--magenta); background:var(--bg-card); padding:0.6rem 0.9rem; border-radius:2px; }
+    .mapping-card h4 { font-family:'Orbitron',sans-serif; font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--magenta); margin:0 0 0.3rem; }
+    .mapping-card p { margin:0; font-size:11px; color:var(--text-dim); line-height:1.5; }
+    .mapping-card code { font-size:10.5px; color:var(--accent-light); background:var(--bg-primary); padding:1px 4px; border-radius:2px; }
+
+    .section-rule { border:none; border-top:1px dashed var(--border); margin:2rem 0; }
+
+    .feature-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(22rem,1fr)); gap:0.65rem; margin:0.8rem 0; }
+    .feature-card { border:1px solid var(--border); border-left:3px solid var(--cyan); background:var(--bg-card); padding:0.7rem 1rem; border-radius:2px; }
+    .feature-card h4 { font-family:'Orbitron',sans-serif; font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--cyan); margin:0 0 0.3rem; }
+    .feature-card p { margin:0; font-size:11px; color:var(--text-dim); line-height:1.55; }
+    .feature-card code { font-size:10.5px; color:var(--accent-light); background:var(--bg-primary); padding:1px 4px; border-radius:2px; }
+    .feature-card ul { margin:0.3rem 0 0; padding-left:1.2rem; font-size:11px; color:var(--text-dim); line-height:1.6; }
+  </style>
+</head>
+<body>
+  <div class="app tutorial-app" id="reportApp">
+    <div class="crt-scanline" id="crtH" aria-hidden="true"></div>
+    <div class="crt-scanline-v" id="crtV" aria-hidden="true"></div>
+
+    <header class="tutorial-header">
+      <div class="tutorial-header-inner">
+        <div>
+          <h1 class="tutorial-brand">// LEARNING_COLLECTION_LOCO &mdash; ENGINEERING REPORT</h1>
+          <nav class="tutorial-crumbs" aria-label="Breadcrumb">
+            <span class="current">Engineering Report</span>
+            <span class="sep">/</span>
+            <a href="index.html">Docs</a>
+            <span class="sep">/</span>
+            <a href="https://github.com/MenkeTechnologies/learning_collection_loco" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <span class="sep">/</span>
+            <a href="https://github.com/MenkeTechnologies/LearningCollectionAPI" target="_blank" rel="noopener noreferrer">Spring original</a>
+          </nav>
+          <p style="margin:0.35rem 0 0;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text-dim);letter-spacing:0.03em;opacity:0.8;max-width:56rem;">
+            Kotlin/Spring Boot &rarr; Rust/Loco port &middot; <code>loco-rs 0.16</code> + <code>axum 0.8</code> + <code>sea-orm 1.1</code> + <code>tokio 1.45</code> + <code>sqlx-sqlite</code> &middot; CRUD over one entity, 1:1 route parity with the Spring controller it replaces.
+          </p>
+        </div>
+        <div class="tutorial-toolbar">
+          <button type="button" class="btn btn-secondary" id="btnTheme" title="Toggle light/dark">Theme</button>
+          <button type="button" class="btn btn-secondary active" id="btnCrt" title="CRT scanline overlay">CRT</button>
+          <button type="button" class="btn btn-secondary active" id="btnNeon" title="Neon border pulse">Neon</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="tutorial-main">
+
+      <!-- ─── 1. Executive Summary ─── -->
+      <h2 class="tutorial-title"><span class="step-hash">&gt;_</span>EXECUTIVE SUMMARY</h2>
+      <p class="tutorial-subtitle"><code>learning_collection_loco</code> is a complete Rust replacement for a small Kotlin/Spring Boot REST service. The original is a Spring Boot 4.0.4 + Kotlin 2.3.20 + Spring Data JPA + Spring Data REST app over MySQL with one entity and ~13 endpoints. The port is <strong>488 lines of Rust across 25 files</strong>, single binary, sub-second cold boot, SQLite by default with a one-flag swap to MySQL/Postgres. Loco 0.16 supplies the <code>Hooks</code> lifecycle, routing assembly, and built-in <code>/_health</code> / <code>/_ping</code> / <code>/_readiness</code> endpoints; Axum 0.8 handles HTTP; SeaORM 1.1 replaces JPA/Hibernate; <code>sea-orm-migration</code> replaces Flyway. <strong>No JVM. No GC pauses. No Hibernate session-per-request. No 2-second startup banner.</strong></p>
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-val">488</div><div class="stat-label">Rust Lines</div></div>
+        <div class="stat-card"><div class="stat-val">25</div><div class="stat-label">Source Files</div></div>
+        <div class="stat-card"><div class="stat-val accent">13</div><div class="stat-label">HTTP Routes</div></div>
+        <div class="stat-card"><div class="stat-val accent">13</div><div class="stat-label">Handler Fns</div></div>
+        <div class="stat-card"><div class="stat-val">33</div><div class="stat-label">Total Fns</div></div>
+        <div class="stat-card"><div class="stat-val">1</div><div class="stat-label">Entity</div></div>
+        <div class="stat-card"><div class="stat-val">1</div><div class="stat-label">Migration</div></div>
+        <div class="stat-card"><div class="stat-val green">3</div><div class="stat-label">Test Modules</div></div>
+        <div class="stat-card"><div class="stat-val">14</div><div class="stat-label">Direct Crates</div></div>
+        <div class="stat-card"><div class="stat-val">559</div><div class="stat-label">Resolved Deps</div></div>
+      </div>
+
+      <div style="margin:1.2rem 0;">
+        <p style="font-size:11px;color:var(--text-muted);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:4px;font-family:'Orbitron',sans-serif;font-weight:700;">Source Distribution &mdash; 488 lines</p>
+        <div class="bar-wrap" style="height:26px;">
+          <div class="bar-fill cyan" style="width:76.8%;"></div>
+          <span class="bar-pct" style="font-size:12px;">375 src / 70 tests / 43 migration &middot; 76.8% src</span>
+        </div>
+        <p style="font-size:10px;color:var(--text-muted);margin-top:4px;">Production: <code>src/</code> (controllers, models, app, lib). Tests: <code>tests/{models,requests,tasks}/</code> integration tests (loco testing harness, <code>serial_test</code>, <code>insta</code>). Migration: <code>migration/src/</code> (one schema migration + library entry).</p>
+      </div>
+
+      <hr class="section-rule">
+
+      <!-- ─── 2. Source Inventory ─── -->
+      <h2 class="tutorial-title"><span class="step-hash">#</span>SOURCE INVENTORY</h2>
+      <p class="tutorial-subtitle">Every <code>.rs</code> file in the tree. The controller is by far the largest at 202 lines &mdash; 41% of the codebase &mdash; because every Spring endpoint is implemented explicitly rather than inferred from <code>@RepositoryRestResource</code>. The generated entity stays minimal (19 lines); the user-extendable wrapper adds 28 lines of behaviour traits.</p>
+
+      <table class="file-table">
+        <thead><tr><th>File</th><th class="num">Lines</th><th class="num">%</th><th style="min-width:140px;">Share</th><th>Role</th></tr></thead>
+        <tbody>
+          <tr><td>src/controllers/learning.rs</td><td class="num">202</td><td class="num">41.4%</td><td><div class="bar-wrap"><div class="bar-fill magenta" style="width:41.4%"></div></div></td><td>Port of <code>LearningController.kt</code>. 13 handlers + 1 helper + 1 route registration + 3 consts (<code>SHORT_CNT</code>/<code>DEFAULT_CAT</code>/<code>DB_NAME</code>) + <code>dump_cmd()</code>.</td></tr>
+          <tr><td>src/app.rs</td><td class="num">66</td><td class="num">13.5%</td><td><div class="bar-wrap"><div class="bar-fill cyan" style="width:13.5%"></div></div></td><td>Loco <code>Hooks</code> impl: app name/version, boot, route registration, workers, tasks, truncate, seed.</td></tr>
+          <tr><td>tests/models/learning_collections.rs</td><td class="num">31</td><td class="num">6.4%</td><td><div class="bar-wrap"><div class="bar-fill green" style="width:6.4%"></div></div></td><td>Insta-snapshot test scaffold for the entity (boot+seed harness).</td></tr>
+          <tr><td>src/models/learning_collections.rs</td><td class="num">28</td><td class="num">5.7%</td><td><div class="bar-wrap"><div class="bar-fill cyan" style="width:5.7%"></div></div></td><td>User wrapper: <code>ActiveModelBehavior</code> impl, re-exports.</td></tr>
+          <tr><td>migration/src/m20260601_044042_learning_collections.rs</td><td class="num">27</td><td class="num">5.5%</td><td><div class="bar-wrap"><div class="bar-fill yellow" style="width:5.5%"></div></div></td><td>Up/down: <code>create_table</code> &harr; <code>drop_table</code> with <code>id PkAuto</code> / <code>learning</code> / <code>category</code> / <code>date_added TimestampWithTimeZone</code>.</td></tr>
+          <tr><td>src/models/_entities/learning_collections.rs</td><td class="num">19</td><td class="num">3.9%</td><td><div class="bar-wrap"><div class="bar-fill cyan" style="width:3.9%"></div></div></td><td>SeaORM <code>DeriveEntityModel</code>: <code>id</code>, <code>learning</code>, <code>category</code>, <code>date_added</code>, <code>created_at</code>, <code>updated_at</code>.</td></tr>
+          <tr><td>tests/requests/learning.rs</td><td class="num">16</td><td class="num">3.3%</td><td><div class="bar-wrap"><div class="bar-fill green" style="width:3.3%"></div></div></td><td>Integration test scaffold against <code>/api/learnings/</code>.</td></tr>
+          <tr><td>migration/src/lib.rs</td><td class="num">16</td><td class="num">3.3%</td><td><div class="bar-wrap"><div class="bar-fill yellow" style="width:3.3%"></div></div></td><td>SeaORM <code>MigratorTrait</code> impl: registers <code>m20260601_044042_learning_collections</code>.</td></tr>
+          <tr><td>src/views/home.rs</td><td class="num">16</td><td class="num">3.3%</td><td><div class="bar-wrap"><div class="bar-fill cyan" style="width:3.3%"></div></div></td><td>Placeholder home view (default Loco generator output).</td></tr>
+          <tr><td>tests/requests/home.rs</td><td class="num">15</td><td class="num">3.1%</td><td><div class="bar-wrap"><div class="bar-fill green" style="width:3.1%"></div></div></td><td>Integration test: GET <code>/api</code> returns <code>{"app_name":"loco"}</code>.</td></tr>
+          <tr><td>src/controllers/home.rs</td><td class="num">12</td><td class="num">2.5%</td><td><div class="bar-wrap"><div class="bar-fill cyan" style="width:2.5%"></div></div></td><td>Placeholder home controller (default Loco generator output).</td></tr>
+          <tr><td>src/bin/main.rs</td><td class="num">8</td><td class="num">1.6%</td><td><div class="bar-wrap"><div class="bar-fill cyan" style="width:1.6%"></div></div></td><td>Binary entrypoint &mdash; delegates to <code>loco_rs::cli</code>.</td></tr>
+          <tr><td>src/lib.rs</td><td class="num">7</td><td class="num">1.4%</td><td><div class="bar-wrap"><div class="bar-fill cyan" style="width:1.4%"></div></div></td><td>Crate root: <code>pub mod app/controllers/models/tasks/views/initializers/data</code>.</td></tr>
+          <tr><td>src/models/_entities/mod.rs</td><td class="num">5</td><td class="num">1.0%</td><td><div class="bar-wrap"><div class="bar-fill cyan" style="width:1.0%"></div></div></td><td>Generated entity module table.</td></tr>
+          <tr><td>tests/mod.rs</td><td class="num">3</td><td class="num">0.6%</td><td><div class="bar-wrap"><div class="bar-fill green" style="width:0.6%"></div></div></td><td>Test module declaration.</td></tr>
+          <tr><td>src/controllers/mod.rs</td><td class="num">3</td><td class="num">0.6%</td><td><div class="bar-wrap"><div class="bar-fill cyan" style="width:0.6%"></div></div></td><td><code>pub mod home; pub mod learning;</code></td></tr>
+          <tr><td>tests/requests/mod.rs</td><td class="num">3</td><td class="num">0.6%</td><td><div class="bar-wrap"><div class="bar-fill green" style="width:0.6%"></div></div></td><td>Test module declaration.</td></tr>
+          <tr><td>src/models/_entities/prelude.rs</td><td class="num">3</td><td class="num">0.6%</td><td><div class="bar-wrap"><div class="bar-fill cyan" style="width:0.6%"></div></div></td><td>Entity prelude re-exports.</td></tr>
+          <tr><td>src/models/mod.rs</td><td class="num">2</td><td class="num">0.4%</td><td><div class="bar-wrap"><div class="bar-fill cyan" style="width:0.4%"></div></div></td><td><code>pub mod _entities; pub mod learning_collections;</code></td></tr>
+          <tr><td>src/data/mod.rs, src/initializers/mod.rs, src/tasks/mod.rs, src/views/mod.rs, tests/models/mod.rs, tests/tasks/mod.rs</td><td class="num">8</td><td class="num">1.6%</td><td><div class="bar-wrap"><div class="bar-fill yellow" style="width:1.6%"></div></div></td><td>Empty / 1-line module declarations &mdash; reserved slots for tasks, views, initializers, data.</td></tr>
+        </tbody>
+        <tfoot><tr class="total-row"><td style="font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:1px;">TOTAL</td><td class="num">488</td><td class="num">100%</td><td></td><td>25 files across <code>src/</code>, <code>migration/</code>, <code>tests/</code></td></tr></tfoot>
+      </table>
+
+      <hr class="section-rule">
+
+      <!-- ─── 3. Route Inventory ─── -->
+      <h2 class="tutorial-title"><span class="step-hash">@</span>ROUTE INVENTORY</h2>
+      <p class="tutorial-subtitle">Thirteen HTTP routes, registered in <code>controllers::learning::routes()</code>. Same paths and verbs as the original Spring controller; the three <code>/learning</code> endpoints replace what Spring Data REST auto-generated from <code>@RepositoryRestResource(path="learning")</code>. Loco's <code>AppRoutes::with_default_routes</code> layers <code>/_health</code> / <code>/_ping</code> / <code>/_readiness</code> on top.</p>
+
+      <table class="file-table">
+        <thead><tr><th>Method</th><th>Path</th><th>Handler</th><th>Returns</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td style="color:var(--green);font-weight:700;">GET</td><td><code>/add?learning=…</code></td><td><code>add</code></td><td>JSON row</td><td>Inserts with <code>category=DEFAULT_CAT</code>, <code>date_added=Utc::now()</code>.</td></tr>
+          <tr><td style="color:var(--green);font-weight:700;">GET</td><td><code>/filter?learning=…</code></td><td><code>filter_learn</code></td><td>JSON [String]</td><td>SeaORM <code>Column::Learning.like("%pat%")</code> &mdash; substring contains, case-sensitive per SQLite default.</td></tr>
+          <tr><td style="color:var(--green);font-weight:700;">GET</td><td><code>/recents</code></td><td><code>recents_default</code></td><td>JSON [String]</td><td>Last <code>SHORT_CNT=20</code> learnings (rev by id).</td></tr>
+          <tr><td style="color:var(--green);font-weight:700;">GET</td><td><code>/recents/{count}</code></td><td><code>recents_count</code></td><td>JSON [String]</td><td>Last <code>count</code> learnings.</td></tr>
+          <tr><td style="color:var(--green);font-weight:700;">GET</td><td><code>/recent/{count}</code></td><td><code>recent_count</code></td><td>JSON [Model]</td><td>Last <code>count</code> full rows.</td></tr>
+          <tr><td style="color:var(--green);font-weight:700;">GET</td><td><code>/random</code></td><td><code>random_one</code></td><td>JSON Model</td><td>Uniform pick via <code>SliceRandom::choose</code> &mdash; 404 on empty.</td></tr>
+          <tr><td style="color:var(--green);font-weight:700;">GET</td><td><code>/randoms</code></td><td><code>randoms_one</code></td><td>JSON String</td><td>Uniform pick, string only &mdash; 404 on empty.</td></tr>
+          <tr><td style="color:var(--green);font-weight:700;">GET</td><td><code>/randoms/{count}</code></td><td><code>randoms_count</code></td><td>JSON [String]</td><td><code>shuffle</code> then <code>take(count)</code> &mdash; strings.</td></tr>
+          <tr><td style="color:var(--green);font-weight:700;">GET</td><td><code>/random/{count}</code></td><td><code>random_count</code></td><td>JSON [Model]</td><td><code>shuffle</code> then <code>take(count)</code> &mdash; full rows.</td></tr>
+          <tr><td style="color:var(--green);font-weight:700;">GET</td><td><code>/dump</code></td><td><code>dump</code></td><td>text/plain</td><td>Shells out to <code>mysqldump --extended-insert=FALSE root</code>. Behavioural parity only &mdash; meaningful when the DB is actually MySQL.</td></tr>
+          <tr><td style="color:var(--green);font-weight:700;">GET</td><td><code>/learning</code></td><td><code>list_all</code></td><td>JSON [Model]</td><td>Spring Data REST collection-style.</td></tr>
+          <tr><td style="color:var(--green);font-weight:700;">GET</td><td><code>/learning/{id}</code></td><td><code>get_one</code></td><td>JSON Model</td><td>404 via <code>Error::NotFound</code> when missing.</td></tr>
+          <tr><td style="color:var(--red);font-weight:700;">DELETE</td><td><code>/learning/{id}</code></td><td><code>delete_one</code></td><td>204 empty</td><td>Spring Data REST item delete.</td></tr>
+        </tbody>
+      </table>
+
+      <hr class="section-rule">
+
+      <!-- ─── 4. Subsystem Breakdown ─── -->
+      <h2 class="tutorial-title"><span class="step-hash">$</span>SUBSYSTEM BREAKDOWN</h2>
+      <p class="tutorial-subtitle">Five subsystems with a clear hierarchy: the HTTP layer (Loco/Axum) dispatches into controllers, which talk to SeaORM, which talks to <code>sqlx</code>, which talks to SQLite. Migrations sit beside the model layer, gated by <code>auto_migrate: true</code> in <code>config/development.yaml</code>.</p>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h4>HTTP &amp; Routing</h4>
+          <p>Loco 0.16 hosts the app via <code>create_app::&lt;App, Migrator&gt;</code>. The <code>Hooks</code> impl in <code>src/app.rs</code> assembles <code>AppRoutes::with_default_routes</code> and chains <code>controllers::learning::routes()</code> + <code>controllers::home::routes()</code>. Axum 0.8 supplies <code>get</code>/<code>delete</code> handlers, <code>State&lt;AppContext&gt;</code>, <code>Query&lt;T&gt;</code>, <code>Path&lt;T&gt;</code> extractors. <code>#[debug_handler]</code> attached for clearer compile errors.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Persistence</h4>
+          <p>SeaORM 1.1 with <code>sqlx-sqlite</code> + <code>sqlx-postgres</code> features and <code>runtime-tokio-rustls</code>. One entity (<code>learning_collections</code>) generated via <code>sea-orm-codegen</code>; a thin user wrapper at <code>src/models/learning_collections.rs</code> implements <code>ActiveModelBehavior</code>. <code>chrono</code> supplies <code>DateTimeWithTimeZone</code> for <code>date_added</code> / <code>created_at</code> / <code>updated_at</code>.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Migrations</h4>
+          <p>Separate <code>migration</code> crate (path dep). <code>MigratorTrait</code> registers <code>m20260601_044042_learning_collections</code>. The migration uses Loco's <code>schema::create_table</code> helper with <code>ColType::{PkAuto, String, TimestampWithTimeZone}</code>. <code>auto_migrate: true</code> in dev/test configs runs migrations on boot; production should run <code>cargo loco db migrate</code> explicitly.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Config</h4>
+          <p>YAML configs under <code>config/{development,test,production}.yaml</code> drive: server bind, DB URI, CORS (replaces Spring <code>WebConfig</code>), logger level, JWT secret slot, auto_migrate toggle. Environment selection via <code>LOCO_ENV</code> / <code>loco_rs::environment::Environment</code>.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Runtime</h4>
+          <p>Tokio 1.45 multi-thread runtime, <code>async-trait</code> 0.1 for the <code>Hooks</code> trait. <code>tracing</code> + <code>tracing-subscriber</code> with <code>env-filter</code> + <code>json</code> features for structured logs. <code>regex</code> 1.11, <code>validator</code> 0.20, <code>uuid</code> 1.6 (v4), <code>rand</code> 0.8 for shuffle/choose. <code>serde</code> + <code>serde_json</code> 1 for wire format.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Tests &amp; Tooling</h4>
+          <p><code>loco-rs</code> with the <code>testing</code> feature gates a <code>request::&lt;App, _, _&gt;</code> harness that boots an in-memory app per test. <code>serial_test</code> serialises DB-touching tests; <code>insta</code> snapshots model output; <code>rstest</code> for parameterised cases. CI runs <code>cargo fmt --check</code> + build/test in <code>.github/workflows/ci.yaml</code>.</p>
+        </div>
+      </div>
+
+      <hr class="section-rule">
+
+      <!-- ─── 5. Dependency Surface ─── -->
+      <h2 class="tutorial-title"><span class="step-hash">&amp;</span>DEPENDENCY SURFACE</h2>
+      <p class="tutorial-subtitle">14 direct dependencies (10 runtime + 4 dev) resolve to <strong>559 packages</strong> in <code>Cargo.lock</code> &mdash; Loco's transitive closure dominates (Axum, Tower, hyper, sqlx, tokio-rustls, openapi-tooling, validator). The crate itself adds nothing exotic on top: <code>chrono</code>, <code>uuid</code>, <code>regex</code>, <code>rand</code>, <code>validator</code> are the only first-party picks beyond what Loco pulls in for free.</p>
+
+      <div class="mapping-grid">
+        <div class="mapping-card"><h4>loco-rs 0.16</h4><p>The framework: <code>Hooks</code> trait, <code>AppContext</code>, <code>AppRoutes</code>, <code>boot</code>, <code>cli</code>, prelude. Re-exports Axum's handler conveniences. <code>testing</code> feature gates the integration harness.</p></div>
+        <div class="mapping-card"><h4>axum 0.8</h4><p>HTTP server &mdash; <code>get</code>/<code>delete</code>, <code>State</code>/<code>Path</code>/<code>Query</code> extractors, <code>Response</code> assembly. Used directly via <code>loco_rs::prelude::*</code>.</p></div>
+        <div class="mapping-card"><h4>sea-orm 1.1</h4><p>Async ORM. Features: <code>sqlx-sqlite</code> + <code>sqlx-postgres</code> (drop one to drop ~30 transitive deps), <code>runtime-tokio-rustls</code>, <code>macros</code>. Generates the <code>Entity</code>/<code>Model</code>/<code>ActiveModel</code>/<code>Column</code> set.</p></div>
+        <div class="mapping-card"><h4>sea-orm-migration (via path)</h4><p><code>MigratorTrait</code> + <code>SchemaManager</code> + <code>create_table</code>/<code>drop_table</code>. Pulled through the local <code>migration</code> crate.</p></div>
+        <div class="mapping-card"><h4>tokio 1.45</h4><p><code>rt-multi-thread</code> only &mdash; everything else (macros, fs, signal) comes from Loco/Axum transitives.</p></div>
+        <div class="mapping-card"><h4>chrono 0.4</h4><p>UTC timestamps in <code>add</code>, model columns. <code>DateTimeWithTimeZone</code> bridge through SeaORM.</p></div>
+        <div class="mapping-card"><h4>serde 1 + serde_json 1</h4><p>Wire-format encode for every JSON-returning handler.</p></div>
+        <div class="mapping-card"><h4>tracing 0.1 + tracing-subscriber 0.3</h4><p>Structured logs with <code>env-filter</code> + <code>json</code> output features.</p></div>
+        <div class="mapping-card"><h4>rand 0.8</h4><p><code>thread_rng</code> + <code>SliceRandom</code> for <code>random</code>/<code>randoms</code> handlers.</p></div>
+        <div class="mapping-card"><h4>regex 1.11, uuid 1.6 (v4), validator 0.20</h4><p>Stock conveniences kept for future use &mdash; not load-bearing in the current handler set.</p></div>
+        <div class="mapping-card"><h4>async-trait 0.1</h4><p>Required by the <code>Hooks</code> trait until async fns in traits stabilises everywhere.</p></div>
+        <div class="mapping-card"><h4>dev: serial_test + rstest + insta</h4><p><code>#[serial]</code> for DB-touching tests, <code>rstest</code> for table-driven cases, <code>insta</code> with <code>redactions,yaml,filters</code> for snapshot assertions.</p></div>
+      </div>
+
+      <hr class="section-rule">
+
+      <!-- ─── 6. Spring Source ↔ Rust Port ─── -->
+      <h2 class="tutorial-title"><span class="step-hash">~</span>SPRING SOURCE &harr; RUST PORT</h2>
+      <p class="tutorial-subtitle">A flat table mapping every Spring artefact to its Rust counterpart. The port preserves every public verb; the disappearance column lists what's gone &mdash; not because it was wrong, but because Loco / SeaORM / Axum supplies the same capability declaratively.</p>
+
+      <table class="file-table">
+        <thead><tr><th>Spring (Kotlin)</th><th>Loco (Rust)</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>LearningCollection @Entity (JPA)</td><td>models/_entities/learning_collections.rs</td><td>SeaORM <code>DeriveEntityModel</code>; same column set.</td></tr>
+          <tr><td>LCRepo : CrudRepository&lt;…&gt;</td><td>Entity::find()/find_by_id() etc.</td><td>SeaORM ships CRUD on the type, not a separate interface.</td></tr>
+          <tr><td>@RepositoryRestResource(path="learning")</td><td>/learning, /learning/{id} explicit handlers</td><td>HAL <code>_links</code> / pagination / PATCH/POST/PUT auto-gen NOT replicated.</td></tr>
+          <tr><td>findAllByLearningContaining(s)</td><td>Column::Learning.like("%s%")</td><td>Inside <code>filter_learn</code> (controllers/learning.rs:55).</td></tr>
+          <tr><td>LearningController</td><td>src/controllers/learning.rs</td><td>13 verbs, byte-for-byte parity on URL shape and response type.</td></tr>
+          <tr><td>WebConfig CORS allowedOrigins</td><td>middlewares.cors in config/*.yaml</td><td>Zero hand-written middleware.</td></tr>
+          <tr><td>application.properties MySQL DSN</td><td>database.uri in config/*.yaml</td><td>SQLite default; swap by URI + Cargo.toml feature.</td></tr>
+          <tr><td>Flyway / hibernate ddl-auto</td><td>sea-orm-migration crate + auto_migrate flag</td><td>One migration file per change, up/down explicit.</td></tr>
+          <tr><td>SpringApplication.run / @SpringBootApplication</td><td>create_app::&lt;App, Migrator&gt; in app.rs</td><td>Loco <code>Hooks::boot</code> entrypoint.</td></tr>
+          <tr><td>Consts.kt: SHORT_CNT/DEFAULT_CAT/DB_NAME</td><td>pub const at top of controllers/learning.rs</td><td>Same names, same values.</td></tr>
+          <tr><td>Lombok @Data / @Builder</td><td>#[derive(...)] (Serialize/Deserialize/Clone/Debug)</td><td>Disappears as part of std derive.</td></tr>
+          <tr><td>QueryDSL Q-types</td><td>SeaORM Column enum + query builder</td><td>Compile-time type-safe filtering native to the ORM.</td></tr>
+          <tr><td>springdoc-openapi</td><td>utoipa (opt-in, not currently wired)</td><td>Add when API contract docs become load-bearing.</td></tr>
+          <tr><td>Spring Boot 2-sec startup banner + JVM warmup</td><td>(nothing)</td><td>Cold boot is sub-second; first request hits a hot path immediately.</td></tr>
+        </tbody>
+      </table>
+
+      <hr class="section-rule">
+
+      <!-- ─── 7. Execution Pipeline ─── -->
+      <h2 class="tutorial-title"><span class="step-hash">%</span>EXECUTION PIPELINE</h2>
+      <p class="tutorial-subtitle">One request, end-to-end, with the relevant files and line counts on the side. Every layer is a thin shim; the longest single function in the codebase is the <code>routes()</code> registration in <code>controllers/learning.rs</code> (13 chained <code>.add(...)</code> calls).</p>
+
+      <pre style="margin:0.5rem 0;padding:1rem;border:1px solid var(--border);background:var(--bg-primary);color:var(--text-dim);font-size:11px;line-height:1.7;overflow-x:auto;">
+  HTTP request (e.g. GET /filter?learning=axum)
+       │
+       ▼
+  ┌──────────────────┐
+  │  Axum router     │      src/app.rs::Hooks::routes  (66 ln)
+  │  + Loco defaults │        AppRoutes::with_default_routes()
+  └────────┬─────────┘          .add_route(learning::routes())
+           │                    .add_route(home::routes())
+           ▼
+  ┌──────────────────┐
+  │  Extractors      │      State&lt;AppContext&gt;, Query&lt;LearningQuery&gt;,
+  │  (axum 0.8)      │      Path&lt;usize|i32&gt;
+  └────────┬─────────┘
+           │
+           ▼
+  ┌──────────────────┐
+  │  Handler         │      src/controllers/learning.rs  (202 ln)
+  │  #[debug_handler]│        - 13 pub async fn handlers
+  │  loco prelude::* │        - 3 consts + dump_cmd() helper
+  └────────┬─────────┘
+           │
+           ▼
+  ┌──────────────────┐
+  │  SeaORM query    │      src/models/_entities/learning_collections.rs  (19 ln)
+  │  Entity::find()  │      src/models/learning_collections.rs            (28 ln)
+  │  .filter(Col…)   │        ActiveModelBehavior, find/find_by_id/insert
+  └────────┬─────────┘
+           │
+           ▼
+  ┌──────────────────┐
+  │  sqlx pool       │      transitive via sea-orm; tokio-rustls runtime
+  │  sqlx-sqlite     │
+  └────────┬─────────┘
+           │
+           ▼
+  ┌──────────────────┐
+  │  SQLite          │      learning_collection_development.sqlite (+wal/shm)
+  │  (or PG, MySQL)  │      schema from migration/src/m20260601_044042_*.rs (27 ln)
+  └──────────────────┘</pre>
+
+      <hr class="section-rule">
+
+      <!-- ─── 8. Footer ─── -->
+      <p style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:2rem;">
+        // engineering report &middot; numbers measured directly from <code>src/</code>, <code>tests/</code>, <code>migration/</code>, and <code>Cargo.lock</code>
+        &middot; <a href="index.html">Back to docs</a>
+        &middot; <a href="https://github.com/MenkeTechnologies/learning_collection_loco">GitHub</a>
+        &middot; <a href="https://github.com/MenkeTechnologies/LearningCollectionAPI">Spring original</a>
+      </p>
+    </main>
+  </div>
+
+  <script type="module" src="hud-theme.js"></script>
+</body>
+</html>
