@@ -4,7 +4,7 @@
 
 use loco_rs::prelude::*;
 use rand::seq::SliceRandom;
-use sea_orm::{ActiveValue, EntityTrait, QueryFilter, ColumnTrait};
+use sea_orm::{ActiveValue, ColumnTrait, EntityTrait, QueryFilter};
 use serde::Deserialize;
 use std::process::Command;
 
@@ -94,7 +94,12 @@ pub async fn recent_count(
     State(ctx): State<AppContext>,
     Path(count): Path<usize>,
 ) -> Result<Response> {
-    let items: Vec<Model> = all_ordered(&ctx).await?.into_iter().rev().take(count).collect();
+    let items: Vec<Model> = all_ordered(&ctx)
+        .await?
+        .into_iter()
+        .rev()
+        .take(count)
+        .collect();
     format::json(items)
 }
 
@@ -165,10 +170,7 @@ pub async fn list_all(State(ctx): State<AppContext>) -> Result<Response> {
 }
 
 #[debug_handler]
-pub async fn get_one(
-    State(ctx): State<AppContext>,
-    Path(id): Path<i32>,
-) -> Result<Response> {
+pub async fn get_one(State(ctx): State<AppContext>, Path(id): Path<i32>) -> Result<Response> {
     let item = LearningCollections::find_by_id(id)
         .one(&ctx.db)
         .await?
@@ -177,10 +179,7 @@ pub async fn get_one(
 }
 
 #[debug_handler]
-pub async fn delete_one(
-    State(ctx): State<AppContext>,
-    Path(id): Path<i32>,
-) -> Result<Response> {
+pub async fn delete_one(State(ctx): State<AppContext>, Path(id): Path<i32>) -> Result<Response> {
     LearningCollections::delete_by_id(id).exec(&ctx.db).await?;
     format::empty()
 }

@@ -1,5 +1,5 @@
+pub use super::_entities::learning_collections::{ActiveModel, Entity, Model};
 use sea_orm::entity::prelude::*;
-pub use super::_entities::learning_collections::{ActiveModel, Model, Entity};
 pub type LearningCollections = Entity;
 
 #[async_trait::async_trait]
