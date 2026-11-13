@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark light">
-  <meta name="description" content="learning_collection_loco — engineering report. Kotlin/Spring Boot to Rust/Loco port: 488 Rust lines, 25 source files, 13 routes, 1 entity, 1 migration, Loco 0.16 + Axum 0.8 + SeaORM 1.1 + SQLite.">
+  <meta name="description" content="learning_collection_loco — engineering report. Kotlin/Spring Boot to Rust/Loco port: 488 Rust lines, 25 source files, 13 routes, 1 entity, 1 migration, Loco 1.3 + Axum 0.8 + SeaORM 2.0 + SQLite.">
   <title>learning_collection_loco &mdash; Engineering Report</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -74,7 +74,7 @@
             <a href="https://github.com/MenkeTechnologies/LearningCollectionAPI" target="_blank" rel="noopener noreferrer">Spring original</a>
           </nav>
           <p style="margin:0.35rem 0 0;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text-dim);letter-spacing:0.03em;opacity:0.8;max-width:56rem;">
-            Kotlin/Spring Boot &rarr; Rust/Loco port &middot; <code>loco-rs 0.16</code> + <code>axum 0.8</code> + <code>sea-orm 1.1</code> + <code>tokio 1.45</code> + <code>sqlx-sqlite</code> &middot; CRUD over one entity, 1:1 route parity with the Spring controller it replaces.
+            Kotlin/Spring Boot &rarr; Rust/Loco port &middot; <code>loco-rs 1.3</code> + <code>axum 0.8</code> + <code>sea-orm 2.0</code> + <code>tokio 1.45</code> + <code>sqlx-sqlite</code> &middot; CRUD over one entity, 1:1 route parity with the Spring controller it replaces.
           </p>
         </div>
         <div class="tutorial-toolbar">
@@ -89,7 +89,7 @@
 
       <!-- ─── 1. Executive Summary ─── -->
       <h2 class="tutorial-title"><span class="step-hash">&gt;_</span>EXECUTIVE SUMMARY</h2>
-      <p class="tutorial-subtitle"><code>learning_collection_loco</code> is a complete Rust replacement for a small Kotlin/Spring Boot REST service. The original is a Spring Boot 4.0.4 + Kotlin 2.3.20 + Spring Data JPA + Spring Data REST app over MySQL with one entity and ~13 endpoints. The port is <strong>488 lines of Rust across 25 files</strong>, single binary, sub-second cold boot, SQLite by default with a one-flag swap to MySQL/Postgres. Loco 0.16 supplies the <code>Hooks</code> lifecycle, routing assembly, and built-in <code>/_health</code> / <code>/_ping</code> / <code>/_readiness</code> endpoints; Axum 0.8 handles HTTP; SeaORM 1.1 replaces JPA/Hibernate; <code>sea-orm-migration</code> replaces Flyway. <strong>No JVM. No GC pauses. No Hibernate session-per-request. No 2-second startup banner.</strong></p>
+      <p class="tutorial-subtitle"><code>learning_collection_loco</code> is a complete Rust replacement for a small Kotlin/Spring Boot REST service. The original is a Spring Boot 4.0.4 + Kotlin 2.3.20 + Spring Data JPA + Spring Data REST app over MySQL with one entity and ~13 endpoints. The port is <strong>488 lines of Rust across 25 files</strong>, single binary, sub-second cold boot, SQLite by default with a one-flag swap to MySQL/Postgres. Loco 1.3 supplies the <code>Hooks</code> lifecycle, routing assembly, and built-in <code>/_health</code> / <code>/_ping</code> / <code>/_readiness</code> endpoints; Axum 0.8 handles HTTP; SeaORM 2.0 replaces JPA/Hibernate; <code>sea-orm-migration</code> replaces Flyway. <strong>No JVM. No GC pauses. No Hibernate session-per-request. No 2-second startup banner.</strong></p>
 
       <div class="stat-grid">
         <div class="stat-card"><div class="stat-val">488</div><div class="stat-label">Rust Lines</div></div>
@@ -128,7 +128,7 @@
           <tr><td>src/models/learning_collections.rs</td><td class="num">28</td><td class="num">5.7%</td><td><div class="bar-wrap"><div class="bar-fill cyan" style="width:5.7%"></div></div></td><td>User wrapper: <code>ActiveModelBehavior</code> impl, re-exports.</td></tr>
           <tr><td>migration/src/m20260601_044042_learning_collections.rs</td><td class="num">27</td><td class="num">5.5%</td><td><div class="bar-wrap"><div class="bar-fill yellow" style="width:5.5%"></div></div></td><td>Up/down: <code>create_table</code> &harr; <code>drop_table</code> with <code>id PkAuto</code> / <code>learning</code> / <code>category</code> / <code>date_added TimestampWithTimeZone</code>.</td></tr>
           <tr><td>src/models/_entities/learning_collections.rs</td><td class="num">19</td><td class="num">3.9%</td><td><div class="bar-wrap"><div class="bar-fill cyan" style="width:3.9%"></div></div></td><td>SeaORM <code>DeriveEntityModel</code>: <code>id</code>, <code>learning</code>, <code>category</code>, <code>date_added</code>, <code>created_at</code>, <code>updated_at</code>.</td></tr>
-          <tr><td>tests/requests/learning.rs</td><td class="num">16</td><td class="num">3.3%</td><td><div class="bar-wrap"><div class="bar-fill green" style="width:3.3%"></div></div></td><td>Integration test scaffold against <code>/api/learnings/</code>.</td></tr>
+          <tr><td>tests/requests/learning.rs</td><td class="num">14</td><td class="num">2.9%</td><td><div class="bar-wrap"><div class="bar-fill green" style="width:2.9%"></div></div></td><td>Integration test against the <code>/learning</code> list route.</td></tr>
           <tr><td>migration/src/lib.rs</td><td class="num">16</td><td class="num">3.3%</td><td><div class="bar-wrap"><div class="bar-fill yellow" style="width:3.3%"></div></div></td><td>SeaORM <code>MigratorTrait</code> impl: registers <code>m20260601_044042_learning_collections</code>.</td></tr>
           <tr><td>src/views/home.rs</td><td class="num">16</td><td class="num">3.3%</td><td><div class="bar-wrap"><div class="bar-fill cyan" style="width:3.3%"></div></div></td><td>Placeholder home view (default Loco generator output).</td></tr>
           <tr><td>tests/requests/home.rs</td><td class="num">15</td><td class="num">3.1%</td><td><div class="bar-wrap"><div class="bar-fill green" style="width:3.1%"></div></div></td><td>Integration test: GET <code>/api</code> returns <code>{"app_name":"loco"}</code>.</td></tr>
@@ -180,11 +180,11 @@
       <div class="feature-grid">
         <div class="feature-card">
           <h4>HTTP &amp; Routing</h4>
-          <p>Loco 0.16 hosts the app via <code>create_app::&lt;App, Migrator&gt;</code>. The <code>Hooks</code> impl in <code>src/app.rs</code> assembles <code>AppRoutes::with_default_routes</code> and chains <code>controllers::learning::routes()</code> + <code>controllers::home::routes()</code>. Axum 0.8 supplies <code>get</code>/<code>delete</code> handlers, <code>State&lt;AppContext&gt;</code>, <code>Query&lt;T&gt;</code>, <code>Path&lt;T&gt;</code> extractors. <code>#[debug_handler]</code> attached for clearer compile errors.</p>
+          <p>Loco 1.3 hosts the app via <code>create_app::&lt;App, Migrator&gt;</code>. The <code>Hooks</code> impl in <code>src/app.rs</code> assembles <code>AppRoutes::with_default_routes</code> and chains <code>controllers::learning::routes()</code> + <code>controllers::home::routes()</code>. Axum 0.8 supplies <code>get</code>/<code>delete</code> handlers, <code>State&lt;AppContext&gt;</code>, <code>Query&lt;T&gt;</code>, <code>Path&lt;T&gt;</code> extractors. <code>#[debug_handler]</code> attached for clearer compile errors.</p>
         </div>
         <div class="feature-card">
           <h4>Persistence</h4>
-          <p>SeaORM 1.1 with <code>sqlx-sqlite</code> + <code>sqlx-postgres</code> features and <code>runtime-tokio-rustls</code>. One entity (<code>learning_collections</code>) generated via <code>sea-orm-codegen</code>; a thin user wrapper at <code>src/models/learning_collections.rs</code> implements <code>ActiveModelBehavior</code>. <code>chrono</code> supplies <code>DateTimeWithTimeZone</code> for <code>date_added</code> / <code>created_at</code> / <code>updated_at</code>.</p>
+          <p>SeaORM 2.0 with <code>sqlx-sqlite</code> + <code>sqlx-postgres</code> features and <code>runtime-tokio-rustls</code>. One entity (<code>learning_collections</code>) generated via <code>sea-orm-codegen</code>; a thin user wrapper at <code>src/models/learning_collections.rs</code> implements <code>ActiveModelBehavior</code>. <code>chrono</code> supplies <code>DateTimeWithTimeZone</code> for <code>date_added</code> / <code>created_at</code> / <code>updated_at</code>.</p>
         </div>
         <div class="feature-card">
           <h4>Migrations</h4>
@@ -211,9 +211,9 @@
       <p class="tutorial-subtitle">14 direct dependencies (10 runtime + 4 dev) resolve to <strong>559 packages</strong> in <code>Cargo.lock</code> &mdash; Loco's transitive closure dominates (Axum, Tower, hyper, sqlx, tokio-rustls, openapi-tooling, validator). The crate itself adds nothing exotic on top: <code>chrono</code>, <code>uuid</code>, <code>regex</code>, <code>rand</code>, <code>validator</code> are the only first-party picks beyond what Loco pulls in for free.</p>
 
       <div class="mapping-grid">
-        <div class="mapping-card"><h4>loco-rs 0.16</h4><p>The framework: <code>Hooks</code> trait, <code>AppContext</code>, <code>AppRoutes</code>, <code>boot</code>, <code>cli</code>, prelude. Re-exports Axum's handler conveniences. <code>testing</code> feature gates the integration harness.</p></div>
+        <div class="mapping-card"><h4>loco-rs 1.3</h4><p>The framework: <code>Hooks</code> trait, <code>AppContext</code>, <code>AppRoutes</code>, <code>boot</code>, <code>cli</code>, prelude. Re-exports Axum's handler conveniences. <code>testing</code> feature gates the integration harness.</p></div>
         <div class="mapping-card"><h4>axum 0.8</h4><p>HTTP server &mdash; <code>get</code>/<code>delete</code>, <code>State</code>/<code>Path</code>/<code>Query</code> extractors, <code>Response</code> assembly. Used directly via <code>loco_rs::prelude::*</code>.</p></div>
-        <div class="mapping-card"><h4>sea-orm 1.1</h4><p>Async ORM. Features: <code>sqlx-sqlite</code> + <code>sqlx-postgres</code> (drop one to drop ~30 transitive deps), <code>runtime-tokio-rustls</code>, <code>macros</code>. Generates the <code>Entity</code>/<code>Model</code>/<code>ActiveModel</code>/<code>Column</code> set.</p></div>
+        <div class="mapping-card"><h4>sea-orm 2.0</h4><p>Async ORM. Features: <code>sqlx-sqlite</code> + <code>sqlx-postgres</code> (drop one to drop ~30 transitive deps), <code>runtime-tokio-rustls</code>, <code>macros</code>. Generates the <code>Entity</code>/<code>Model</code>/<code>ActiveModel</code>/<code>Column</code> set.</p></div>
         <div class="mapping-card"><h4>sea-orm-migration (via path)</h4><p><code>MigratorTrait</code> + <code>SchemaManager</code> + <code>create_table</code>/<code>drop_table</code>. Pulled through the local <code>migration</code> crate.</p></div>
         <div class="mapping-card"><h4>tokio 1.45</h4><p><code>rt-multi-thread</code> only &mdash; everything else (macros, fs, signal) comes from Loco/Axum transitives.</p></div>
         <div class="mapping-card"><h4>chrono 0.4</h4><p>UTC timestamps in <code>add</code>, model columns. <code>DateTimeWithTimeZone</code> bridge through SeaORM.</p></div>

@@ -6,11 +6,9 @@ use serial_test::serial;
 #[serial]
 async fn can_get_learnings() {
     request::<App, _, _>(|request, _ctx| async move {
-        let res = request.get("/api/learnings/").await;
+        let res = request.get("/learning").await;
         assert_eq!(res.status_code(), 200);
-
-        // you can assert content like this:
-        // assert_eq!(res.text(), "content");
+        res.assert_json(&serde_json::json!([]));
     })
     .await;
 }

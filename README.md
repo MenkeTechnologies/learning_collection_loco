@@ -12,7 +12,7 @@
 [![Docs](https://img.shields.io/badge/docs-online-blue.svg)](https://menketechnologies.github.io/learning_collection_loco/)
 [![Report](https://img.shields.io/badge/engineering-report-ff2a6d.svg)](https://menketechnologies.github.io/learning_collection_loco/report.html)
 [![Rust](https://img.shields.io/badge/rust-2021-orange.svg)](https://www.rust-lang.org)
-[![Loco](https://img.shields.io/badge/loco-0.16-05d9e8.svg)](https://loco.rs)
+[![Loco](https://img.shields.io/badge/loco-1.3-05d9e8.svg)](https://loco.rs)
 [![Axum](https://img.shields.io/badge/axum-0.8-d300c5.svg)](https://github.com/tokio-rs/axum)
 [![SeaORM](https://img.shields.io/badge/sea--orm-1.1-39ff14.svg)](https://www.sea-ql.org/SeaORM/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -47,9 +47,9 @@ A complete Rust replacement for the Kotlin/Spring Boot [`LearningCollectionAPI`]
 
 Stack:
 
-- **Loco 0.16** &mdash; `Hooks` lifecycle, route assembly, built-in `/_health` / `/_ping` / `/_readiness`
+- **Loco 1.3** &mdash; `Hooks` lifecycle, route assembly, built-in `/_health` / `/_ping` / `/_readiness`
 - **Axum 0.8** &mdash; HTTP handlers, extractors, response building
-- **SeaORM 1.1** &mdash; async ORM with `sqlx-sqlite` + `sqlx-postgres`
+- **SeaORM 2.0** &mdash; async ORM with `sqlx-sqlite` + `sqlx-postgres`
 - **sea-orm-migration** &mdash; replaces Flyway / `spring.jpa.hibernate.ddl-auto`
 - **Tokio 1.45** multi-thread runtime
 - **`chrono` / `serde` / `serde_json` / `tracing` / `rand` / `validator` / `uuid` / `regex`** &mdash; stock conveniences
@@ -203,7 +203,7 @@ learning_collection_loco/
 | Test modules | **3** |
 | Direct dependencies | **14** (10 runtime + 4 dev) |
 | Transitive packages (`Cargo.lock`) | **559** |
-| Loco version | **0.16** |
+| Loco version | **1.3** |
 | Axum version | **0.8** |
 | SeaORM version | **1.1** |
 | Tokio version | **1.45** |
